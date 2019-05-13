@@ -28,7 +28,7 @@ public class Main {
                 throw new AssertionError(e);
             }
 
-            Continuation.yield(slave, SCOPE);
+            continuation.pause(SCOPE);
 
 //            System.out.println("preempt");
 //            var status = continuation.tryPreempt(slave);
