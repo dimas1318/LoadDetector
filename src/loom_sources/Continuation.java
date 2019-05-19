@@ -420,7 +420,7 @@ public class Continuation {
      * @return {@code true} for success; {@code false} for failure
      */
     // @DontInline
-    public static boolean yield(Continuation cont) {
+    public static boolean myYield(Continuation cont) {
         return cont.yield0(cont.getScope(), null);
     }
 
@@ -433,7 +433,7 @@ public class Continuation {
      * @throws IllegalStateException if not currently in the given {@code scope},
      */
     // @DontInline
-    public static boolean yield(Thread thread, ContinuationScope scope) {
+    public static boolean myYield(Thread thread, ContinuationScope scope) {
         Continuation cont = thread.getContinuation();
         Continuation c;
         int scopes = 0;
@@ -475,7 +475,7 @@ public class Continuation {
      * @throws IllegalStateException if not currently in the given {@code scope},
      */
     // @DontInline
-    public boolean pause(ContinuationScope scope) {
+    public boolean myPause(ContinuationScope scope) {
         return yield0(scope, null);
     }
 
@@ -963,6 +963,15 @@ public class Continuation {
             throw new UnsupportedOperationException("Thread-local handshakes disabled");
         }
         return res;
+    }
+
+    /**
+     * TBD
+     * 
+     * @param thread TBD
+     */
+    public void myTryForceYield(Thread thread) {
+        tryForceYield0(thread);
     }
 
     private native int tryForceYield0(Thread thread);
