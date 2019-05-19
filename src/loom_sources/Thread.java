@@ -1696,8 +1696,31 @@ class Thread implements Runnable {
     }
 
     /**
+     * TBD
+     * @return cont cont
+     */
+    public Continuation myGetContinuation() {
+        return cont;
+    }
+
+    /**
+     * TBD
+     */
+    public void yieldContinuation() {
+        Continuation.yield(cont.myGetScope());
+    }
+
+    /**
      */
     void setContinuation(Continuation cont) {
+        this.cont = cont;
+    }
+
+    /**
+     * TBD
+     * @param  cont cont
+     */
+    public void mySetContinuation(Continuation cont) {
         this.cont = cont;
     }
 

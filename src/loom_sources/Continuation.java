@@ -192,7 +192,23 @@ public class Continuation {
         return scope;
     }
 
+    /**
+     * TBD
+     * @return TBD
+     */
+    public ContinuationScope myGetScope() {
+        return scope;
+    }
+
     Continuation getParent() {
+        return parent;
+    }
+
+     /**
+     * TBD
+     * @return TBD
+     */
+    public Continuation myGetParent() {
         return parent;
     }
 
@@ -349,7 +365,7 @@ public class Continuation {
             // we're now in the parent continuation
 
             assert yieldInfo == null || yieldInfo instanceof ContinuationScope;
-            if (yieldInfo == null || yieldInfo == scope) {
+            if (yieldInfo == null || yieldInfo.equals(scope)) {
                 this.parent = null;
                 this.yieldInfo = null;
                 return;
@@ -375,8 +391,9 @@ public class Continuation {
                     System.out.println("ENTERING " + id());
                 this.entrySP = getSP();
                 enter0(); // make this an invokevirtual rather than invokeinterface. Otherwise it freaks out the interpreter (currently solved by patching in native)
-            } else
+            } else {
                 doContinue(); // intrinsic. Jumps into yield, as a return from doYield
+            }
         } finally {
             done = true;
             assert reset || fence() && isStackEmpty() : "sp: " + sp + " stack.length: " + (stack != null ? stack.length : "null");
@@ -396,6 +413,39 @@ public class Continuation {
         return stack != null && sp < stack.length;
     }
 
+     /**
+     * TBD
+     * 
+     * @param cont cont
+     * @return {@code true} for success; {@code false} for failure
+     */
+    // @DontInline
+    public static boolean yield(Continuation cont) {
+        return cont.yield0(cont.getScope(), null);
+    }
+
+    /**
+     * TBD
+     * 
+     * @param thread thread
+     * @param scope The {@link ContinuationScope} to yield
+     * @return {@code true} for success; {@code false} for failure
+     * @throws IllegalStateException if not currently in the given {@code scope},
+     */
+    // @DontInline
+    public static boolean yield(Thread thread, ContinuationScope scope) {
+        Continuation cont = thread.getContinuation();
+        Continuation c;
+        int scopes = 0;
+        for (c = cont; c != null && !c.scope.equals(scope); c = c.parent) {
+            scopes++;
+        }
+        if (c == null)
+            throw new IllegalStateException("Not in scope " + scope);
+
+        return cont.yield0(scope, null);
+    }
+
     /**
      * TBD
      * 
@@ -408,7 +458,7 @@ public class Continuation {
         Continuation cont = currentCarrierThread().getContinuation();
         Continuation c;
         int scopes = 0;
-        for (c = cont; c != null && c.scope != scope; c = c.parent) {
+        for (c = cont; c != null && !c.scope.equals(scope); c = c.parent) {
             scopes++;
         }
         if (c == null)
@@ -434,7 +484,7 @@ public class Continuation {
         if (scope != this.scope)
             this.yieldInfo = scope;
         int res = doYield(0);
-        unsafe.storeFence(); // needed to prevent certain transformations by the compiler
+        unsafe.fullFence(); // needed to prevent certain transformations by the compiler
         if (TRACE) System.out.println(this + " awake on scope " + scope + " child: " + child + " res: " + res);
 
         try {
@@ -830,7 +880,10 @@ public class Continuation {
     private static long getPC() { throw new Error("Intrinsic not installed"); };
 
     @HotSpotIntrinsicCandidate
-    private void doContinue() { throw new Error("Intrinsic not installed"); };
+    private void doContinue() { 
+       yield0(this.getScope(), null);
+       //throw new Error("Intrinsic not installed"); 
+    };
 
     @HotSpotIntrinsicCandidate
     private static int doYield(int scopes) { throw new Error("Intrinsic not installed"); };
