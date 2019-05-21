@@ -7,9 +7,9 @@ public class Main {
 
         var SCOPE = new ContinuationScope("SCOPE");
         var continuation = new Continuation(SCOPE, () -> {
-            while (true) {
+//            while (true) {
 //                System.out.println("kkk");
-            }
+//            }
 //            Timer timer = new Timer();
 //            timer.scheduleAtFixedRate(new TimerTask() {
 //                @Override
@@ -17,21 +17,21 @@ public class Main {
 //                    System.out.println("out :" + "1");
 //                }
 //            }, 500, 500);
-//            System.out.println("first");
-//            try {
-//                Thread.sleep(700);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-////            Continuation.yield(SCOPE);
-//            System.out.println("second");
-//            try {
-//                Thread.sleep(700);
-//            } catch (InterruptedException e) {
-//                e.printStackTrace();
-//            }
-////            Continuation.yield(SCOPE);
-//            System.out.println("third");
+            System.out.println("first");
+            try {
+                Thread.sleep(700);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+//            Continuation.yield(SCOPE);
+            System.out.println("second");
+            try {
+                Thread.sleep(700);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+//            Continuation.yield(SCOPE);
+            System.out.println("third");
         });
 
 //        Fiber slave = Fiber.schedule(continuation::run);
@@ -77,12 +77,12 @@ public class Main {
 //
 //            slave.start();
             try {
-                Thread.sleep(2000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 throw new AssertionError(e);
             }
 
-            slave.myGetContinuation().pause(SCOPE);
+            slave.myGetContinuation().myTryForceYield(slave);
 //            slave.yieldContinuation();
 //            Continuation.yield(cont);
 //            Continuation.yield(slave, SCOPE);
@@ -103,7 +103,7 @@ public class Main {
 //            System.out.println(slave.getState());
 //
 //            System.out.println(cont.toString());
-//            continuation.run();
+            continuation.run();
         });
         host.start();
 
