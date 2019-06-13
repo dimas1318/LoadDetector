@@ -10,15 +10,17 @@ import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class Balancer {
 
     private static final ContinuationScope SCOPE = new ContinuationScope("BALANCER_SCOPE");
     private static final int DEFAULT_N_THREADS = 2;
     private static final double DEFAULT_CPU_LOAD = 0.9D;
-    private static final int MAX_ATTEMPTS = 5;
+    private static final int MAX_ATTEMPTS = 100;
 
     private final ExecutorService executorService;
+    //    private final Executor executorService;
     private final Queue<StatedContinuation> activeTasks;
     private final LoadChecker loadChecker;
 
@@ -44,6 +46,7 @@ public class Balancer {
 
     public Balancer(int nThreads, boolean enableSerialization, double limitCpu) {
         executorService = Executors.newFixedThreadPool(nThreads);
+//        executorService = new CustExecutorService();
         isSerializationEnabled = enableSerialization;
         if (isSerializationEnabled) {
             taskNameQueue = new PriorityBlockingQueue<>(11, (p1, p2) -> p2.getPriority().compareTo(p1.getPriority()));
@@ -59,18 +62,24 @@ public class Balancer {
             @Override
             public void run() {
                 if (loadChecker.isCpuOverloaded()) {
+                    printInfo();
                     if (!activeTasks.isEmpty()) {
                         StatedContinuation task = activeTasks.poll();
 //                        task.myPause(SCOPE);
 //                        task.
                         task.myTryForceYield(task._getThread());
-                        if (isSerializationEnabled) {
-                            String taskName = Integer.toHexString(System.identityHashCode(task));
-                            serializer.serialize(task, taskName);
-                            taskNameQueue.add(new Pair(taskName, task.getPriority()));
-                        } else {
-                            taskQueue.add(task);
+                        if (task.isPreempted()) {
+                            if (isSerializationEnabled) {
+                                String taskName = Integer.toHexString(System.identityHashCode(task));
+                                serializer.serialize(task, taskName);
+                                taskNameQueue.add(new Pair(taskName, task.getPriority()));
+                            } else {
+                                taskQueue.add(task);
+                            }
+                        } else if (!task.isDone()) {
+                            activeTasks.add(task);
                         }
+                        printInfo();
                     }
                 }
             }
@@ -108,16 +117,27 @@ public class Balancer {
                 }
             }
         } else {
+            printInfo();
             if (!taskQueue.isEmpty()) {
                 StatedContinuation task = taskQueue.poll();
-                executorService.submit(() -> {
-                    activeTasks.add(task);
-                    task.run();
-                    activeTasks.remove(task);
-                    if (!task.isDone()) {
-                        taskQueue.add(task);
+                if (!task._getMounted()) {
+                    synchronized (this) {
+                        activeTasks.add(task);
+                        executorService.execute(() -> {
+                                    if (!task._getMounted()) {
+                                        task.run();
+                                        activeTasks.remove(task);
+                                        if (!task.isDone()) {
+                                            taskQueue.add(task);
+                                        }
+                                    }
+                                }
+                        );
                     }
-                });
+                    printInfo();
+                } else if (!task.isDone()) {
+                    taskQueue.add(task);
+                }
             } else {
                 if (!sleep()) {
                     shutdown();
@@ -129,7 +149,12 @@ public class Balancer {
     }
 
     public void shutdown() {
-        executorService.shutdown();
+        try {
+            executorService.shutdown();
+            executorService.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            executorService.shutdown();
+        }
     }
 
     private void addTask(StatedContinuation task) {
@@ -155,6 +180,11 @@ public class Balancer {
         } else {
             return false;
         }
+    }
+
+    private void printInfo() {
+//        System.out.println("taskQueue: " + taskQueue);
+//        System.out.println("activeTasks: " + activeTasks);
     }
 
 //    c4, phase 1, HIGH

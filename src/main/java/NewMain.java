@@ -5,7 +5,7 @@ public class NewMain {
 
     public static void main(String[] args) {
 
-        Balancer balancer = new Balancer(4, true, 0.3D);
+        Balancer balancer = new Balancer(4, false, 0.2D);
 
         final var t1 = new Runnable() {
             @Override

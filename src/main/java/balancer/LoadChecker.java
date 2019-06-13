@@ -16,7 +16,7 @@ public class LoadChecker {
 
     public boolean isCpuOverloaded() {
         double processCpuLoad = osBean.getProcessCpuLoad();
-        System.out.println(processCpuLoad);
+//        System.out.println(processCpuLoad);
         return processCpuLoad > limitCpuLoad;
     }
 }
