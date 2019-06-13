@@ -61,7 +61,9 @@ public class Balancer {
                 if (loadChecker.isCpuOverloaded()) {
                     if (!activeTasks.isEmpty()) {
                         StatedContinuation task = activeTasks.poll();
-                        task.myPause(SCOPE);
+//                        task.myPause(SCOPE);
+//                        task.
+                        task.myTryForceYield(task._getThread());
                         if (isSerializationEnabled) {
                             String taskName = Integer.toHexString(System.identityHashCode(task));
                             serializer.serialize(task, taskName);
@@ -170,4 +172,25 @@ public class Balancer {
 //    c4, phase 3, LOW
 //    c3, phase 2, LOW
 //    c3, phase 3, HIGH
+
+
+//    # To suppress the following error report, specify this argument
+//# after -XX: or in .hotspotrc:  SuppressErrorAt=/continuation.cpp:2640
+//            #
+//            # A fatal error has been detected by the Java Runtime Environment:
+//            #
+//            #  Internal Error (/home/dmitry/Downloads/LOOM/loom/src/hotspot/share/runtime/continuation.cpp:2640), pid=4122, tid=4139
+//            #  assert(cont != __null && oopDesc::is_oop_or_null(cont)) failed: Invalid cont: 0x0000000000000000
+//            #
+//            # JRE version: OpenJDK Runtime Environment (13.0) (slowdebug build 13-internal+0-adhoc.dmitry.loom)
+//            # Java VM: OpenJDK 64-Bit Server VM (slowdebug 13-internal+0-adhoc.dmitry.loom, mixed mode, tiered, compressed oops, g1 gc, linux-amd64)
+//# Problematic frame:
+//            # V  [libjvm.so+0x8b01e3]  Continuation::freeze0(JavaThread*, FrameInfo*, bool)+0x37d
+//            #
+//            # Core dump will be written. Default location: Core dumps may be processed with "/usr/share/apport/apport %p %s %c %d %P" (or dumping to /home/dmitry/Downloads/LoadDetector/target/classes/core.4122)
+//            #
+//            # An error report file with more information is saved as:
+//            # /home/dmitry/Downloads/LoadDetector/target/classes/hs_err_pid4122.log
+//    Could not load hsdis-amd64.so; library not loadable; PrintAssembly is disabled
+//    Compiled method (c1)    5722  368       2       java.lang.Thr
 }
