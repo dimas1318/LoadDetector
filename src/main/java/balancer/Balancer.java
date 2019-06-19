@@ -4,13 +4,11 @@ import balancer.serializer.Serializer;
 import continuation.Priority;
 import continuation.StatedContinuation;
 
+import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.PriorityBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class Balancer {
 
@@ -20,7 +18,7 @@ public class Balancer {
     private static final int MAX_ATTEMPTS = 100;
 
     private final ExecutorService executorService;
-    //    private final Executor executorService;
+//        private final Executor executorService;
     private final Queue<StatedContinuation> activeTasks;
     private final LoadChecker loadChecker;
 
@@ -53,6 +51,7 @@ public class Balancer {
             serializer = new Serializer();
         } else {
             taskQueue = new PriorityBlockingQueue<>(11, new ContinuationStateComparator(false));
+//            taskQueue = new LinkedList<>();
         }
         activeTasks = new PriorityBlockingQueue<>(11, new ContinuationStateComparator(true));
 
@@ -69,6 +68,7 @@ public class Balancer {
 //                        task.
                         task.myTryForceYield(task._getThread());
                         if (task.isPreempted()) {
+                            System.out.println(task.getPriority() + " is yielded");
                             if (isSerializationEnabled) {
                                 String taskName = Integer.toHexString(System.identityHashCode(task));
                                 serializer.serialize(task, taskName);
@@ -126,6 +126,7 @@ public class Balancer {
                         executorService.execute(() -> {
                                     if (!task._getMounted()) {
                                         task.run();
+                                        System.out.println(task.getPriority() + " " + (System.currentTimeMillis() - task.getTime()));
                                         activeTasks.remove(task);
                                         if (!task.isDone()) {
                                             taskQueue.add(task);

@@ -17,7 +17,12 @@ public class ContinuationStateComparator implements Comparator<StatedContinuatio
         if (inverse) {
             return c1.getPriority().compareTo(c2.getPriority());
         } else {
-            return c2.getPriority().compareTo(c1.getPriority());
+            int res = c2.getPriority().compareTo(c1.getPriority());
+            if (res == 0) {
+                return Long.compare(c1.getTime(), c2.getTime());
+            } else {
+                return res;
+            }
         }
     }
 }

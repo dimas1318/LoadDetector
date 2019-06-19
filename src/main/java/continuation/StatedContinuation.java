@@ -4,6 +4,8 @@ public class StatedContinuation extends Continuation {
 
     private Priority priority;
 
+    private long time;
+
     public StatedContinuation(ContinuationScope scope, Runnable target) {
         super(scope, target);
         priority = Priority.MEDIUM;
@@ -17,6 +19,7 @@ public class StatedContinuation extends Continuation {
     public StatedContinuation(ContinuationScope scope, Runnable target, Priority priority) {
         super(scope, target);
         this.priority = priority;
+        time = System.currentTimeMillis();
     }
 
     public StatedContinuation(ContinuationScope scope, int stackSize, Runnable target, Priority priority) {
@@ -30,5 +33,9 @@ public class StatedContinuation extends Continuation {
 
     public void setPriority(Priority priority) {
         this.priority = priority;
+    }
+
+    public long getTime() {
+        return time;
     }
 }

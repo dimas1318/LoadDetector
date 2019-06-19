@@ -18,5 +18,6 @@ public class LoadChecker {
         double processCpuLoad = osBean.getProcessCpuLoad();
 //        System.out.println(processCpuLoad);
         return processCpuLoad > limitCpuLoad;
+//        return false;
     }
 }
